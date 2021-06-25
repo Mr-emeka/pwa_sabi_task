@@ -22,6 +22,7 @@ type IProps = {
 
 const ProductDetails: FC<IProps> = ({ match }): ReactElement => {
     const productId = match.params.id
+    const [notify, setNotify] = useState(false)
     const [product, setProduct] = useState({
         name: "",
         description: "",
@@ -30,6 +31,9 @@ const ProductDetails: FC<IProps> = ({ match }): ReactElement => {
     })
     const data: any = useSelector((state: RootState) => state?.product?.items.find((item: { id: string; }) => item.id === productId))
     const history = useHistory()
+    const closeNotification = () => {
+        setNotify(false)
+    }
 
     useEffect(() => {
         if (data) {
@@ -38,6 +42,13 @@ const ProductDetails: FC<IProps> = ({ match }): ReactElement => {
         }
         history.push('/')
     }, [data, history])
+    const handleNotification = (added: boolean) => {
+        if (added) return
+
+        setNotify(true)
+        setTimeout(() => setNotify(false), 1000);
+        return;
+    }
 
     return <ProductViewLayout displayAction={true} name="Details">
         <div>
@@ -61,8 +72,8 @@ const ProductDetails: FC<IProps> = ({ match }): ReactElement => {
             <Review />
 
         </div>
-        <ActionBottomNav item={data} productId={productId} />
-        <Notification />
+        <ActionBottomNav item={data} productId={productId} handleNotification={handleNotification} />
+        {notify && <Notification closeNotification={closeNotification} />}
     </ProductViewLayout>
 }
 
@@ -96,7 +107,7 @@ size fits perfectly and I love the colors!!!!!</p>
 }
 
 
-const ActionBottomNav = ({ item, productId }: { item: any[], productId: string }) => {
+const ActionBottomNav = ({ item, productId, handleNotification }: { item: any[], productId: string, handleNotification: Function }) => {
     const dispatch = useDispatch()
     const { cartItems }: { cartItems: any[] } = useSelector((state: RootState) => state?.cart)
 
@@ -104,7 +115,7 @@ const ActionBottomNav = ({ item, productId }: { item: any[], productId: string }
     let currentText = added ? 'Added to cart' : "Add to cart";
 
     return <div className="review__actionArea">
-        <Button text={currentText} handleClick={() => dispatch(asyncAddItem(item))} style={{
+        <Button text={currentText} handleClick={() => { handleNotification(added); dispatch(asyncAddItem(item)) }} style={{
             textTransform: "capitalize",
             fontSize: '14px',
             letterSpacing: "2px",
